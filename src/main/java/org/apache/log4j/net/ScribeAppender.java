@@ -186,7 +186,7 @@ public class ScribeAppender extends AppenderSkeleton {
 
     public void setRemoteHost(final String remoteHost) {
 
-        Validate.notEmptyString(category, "Remote host must not be empty");
+        Validate.notEmptyString(remoteHost, "Remote host must not be empty");
         this.remoteHost = remoteHost;
     }
 
