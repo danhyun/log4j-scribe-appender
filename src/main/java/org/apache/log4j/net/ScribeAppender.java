@@ -270,6 +270,7 @@ public class ScribeAppender extends AppenderSkeleton {
     private void establishConnection() throws TTransportException, UnknownHostException, IOException {
 
         TSocket sock = new TSocket(new Socket(remoteHost, remotePort));
+        sock.setTimeout(700);
         transport = new TFramedTransport(sock);
 
         TBinaryProtocol protocol = new TBinaryProtocol(transport, false, false);
