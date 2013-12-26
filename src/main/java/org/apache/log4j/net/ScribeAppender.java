@@ -17,13 +17,9 @@
  */
 package org.apache.log4j.net;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.facebook.scribe.thrift.LogEntry;
+import com.facebook.scribe.thrift.ResultCode;
+import com.facebook.scribe.thrift.scribe.Client;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.thrift.TException;
@@ -32,25 +28,27 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 
-import com.facebook.scribe.thrift.LogEntry;
-import com.facebook.scribe.thrift.ResultCode;
-import com.facebook.scribe.thrift.scribe.Client;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A basic log4j appender for sending log messages to a remote Scribe instance. The logic in
  * {@link #append(LoggingEvent)} will drop any log events that fail to be sent to Scribe. All failures are handled by
  * log4j error handling mechanism which should log to the backup appender if defined or STDERR if there is no backup
  * appender.
- * 
+ * <p/>
  * <p>
  * This is based on previous Scribe appenders as well as the built-in log4j appenders like {@link JMSAppender} and
  * {@link SyslogAppender}.
  * </p>
- * 
+ *
+ * @author Josh Devins
  * @see http://github.com/alexlod/scribe-log4j-appender
  * @see http://github.com/lenn0x/Scribe-log4j-Appender
- * 
- * @author Josh Devins
  */
 public class ScribeAppender extends AppenderSkeleton {
 
@@ -92,7 +90,7 @@ public class ScribeAppender extends AppenderSkeleton {
      * Appends a log message to remote Scribe server. This is currently made thread safe by synchronizing this method,
      * however this is not very efficient and should be refactored. Method will return null if no errors ocurred,
      * otherwise the specific error will be returned.
-     * 
+     * <p/>
      * TODO: Refactor for better effeciency and thread safety
      */
     public ERROR appendAndGetError(final LoggingEvent event) {
@@ -210,12 +208,17 @@ public class ScribeAppender extends AppenderSkeleton {
             StringBuilder sb = new StringBuilder();
             String[] stackTraceArray = event.getThrowableInformation().getThrowableStrRep();
 
-            // first n lines of stack trace only
-            for (int i = 0; i < stackTraceDepth + 1; i++) {
-                sb.append(stackTraceArray[i]);
-            }
+            if (stackTraceArray.length > 0) {
+                // first n lines of stack trace only
+                for (int i = 0; i < stackTraceDepth + 1; i++) {
+                    sb.append(stackTraceArray[i]);
+                }
 
-            stackTrace = sb.toString();
+                stackTrace = sb.toString();
+            } else {
+                // is a 0 length stacktrace the same as a null stacktrace?
+                stackTrace = null;
+            }
         }
 
         findAndSetLocalHostnameIfNeeded();
@@ -230,7 +233,7 @@ public class ScribeAppender extends AppenderSkeleton {
 
     /**
      * Connect to Scribe if not open, reconnecting if a previous connection has failed.
-     * 
+     *
      * @return connection success
      */
     private boolean connectIfNeeded() {
