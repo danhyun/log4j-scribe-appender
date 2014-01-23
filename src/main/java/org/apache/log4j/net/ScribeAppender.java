@@ -207,10 +207,12 @@ public class ScribeAppender extends AppenderSkeleton {
 
             StringBuilder sb = new StringBuilder();
             String[] stackTraceArray = event.getThrowableInformation().getThrowableStrRep();
+            int length = stackTraceArray != null ? stackTraceArray.length : 0;
+            if (length > 0) {
 
-            if (stackTraceArray.length > 0) {
-                // first n lines of stack trace only
-                for (int i = 0; i < stackTraceDepth + 1; i++) {
+                // first n lines of stack trace only or stackLength only
+                int numberOfLines = Math.min(length, stackTraceDepth + 1);
+                for (int i = 0; i < numberOfLines; i++) {
                     sb.append(stackTraceArray[i]);
                 }
 
